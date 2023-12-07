@@ -1,0 +1,35 @@
+{
+  "development": {
+    "username": "nmkhoi",
+    "password": "FZZq1J7lSVc8xatyiMJohFh4mOi6NeLV",
+    "database": "week8db",
+    "host": "dpg-clfb5hdadtrs73eajc20-a.oregon-postgres.render.com",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "database_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "nmkhoi",
+    "password": "FZZq1J7lSVc8xatyiMJohFh4mOi6NeLV",
+    "database": "week8db",
+    "host": "dpg-clfb5hdadtrs73eajc20-a.oregon-postgres.render.com",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  }
+}
