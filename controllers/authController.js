@@ -1,5 +1,6 @@
 const controller = {};
 const User = require("../models").User;
+const jwt = require("jsonwebtoken");
 
 controller.showIndex = (req, res) => {
   res.render("index");
@@ -11,15 +12,22 @@ controller.showProfile = (req, res) => {
 
 controller.showLogin = (req, res) => {
   let reqUrl = req.query.reqUrl ? req.query.reqUrl : "/";
-  if (req.session.user) {
-    return res.redirect(reqUrl);
+  const token = req.cookies.token;
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+      if (err) {
+        // Invalid token
+        res.clearCookie("token");
+        return res.redirect(`/login?reqUrl=${req.originalUrl}`);
+      }
+      return res.redirect(reqUrl);
+    });
+  } else {
+    res.render("auth-login", {
+      layout: "auth",
+      reqUrl,
+    });
   }
-  res.render("auth-login", {
-    layout: "auth",
-    reqUrl,
-    username: req.signedCookies.username,
-    password: req.signedCookies.password,
-  });
 };
 
 controller.showRegister = (req, res) => {
@@ -63,19 +71,15 @@ controller.login = async (req, res) => {
   });
   if (user) {
     let reqUrl = req.body.reqUrl ? req.body.reqUrl : "/";
-    req.session.user = user;
-    if (rememberMe) {
-      res.cookie("username", username, {
-        maxAge: 60 * 60 * 1000,
-        httpOnly: false,
-        signed: true,
-      });
-      res.cookie("password", password, {
-        maxAge: 60 * 60 * 1000,
-        httpOnly: true,
-        signed: true,
-      });
-    }
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.ACCESS_TOKEN_SECRET
+    );
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      maxAge: rememberMe ? 60 * 60 * 1000 : undefined,
+    });
     return res.redirect(reqUrl);
   }
   return res.render("auth-login", {
@@ -85,18 +89,27 @@ controller.login = async (req, res) => {
 };
 
 controller.logout = (req, res, next) => {
-  req.session.destroy(function (error) {
-    if (error) return next(error);
-    res.redirect("/login");
-  });
+  res.clearCookie("token");
+  res.redirect("/login");
 };
 
 controller.isLoggedIn = async (req, res, next) => {
-  if (req.session.user) {
-    res.locals.user = req.session.user;
-    return next();
+  const token = req.cookies.token;
+
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+      if (err) {
+        // Invalid token
+        res.clearCookie("token");
+        return res.redirect(`/login?reqUrl=${req.originalUrl}`);
+      }
+
+      res.locals.user = user;
+      next();
+    });
+  } else {
+    return res.redirect(`/login?reqUrl=${req.originalUrl}`);
   }
-  res.redirect(`/login?reqUrl=${req.originalUrl}`);
 };
 
 module.exports = controller;
